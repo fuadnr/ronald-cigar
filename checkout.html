@@ -734,13 +734,19 @@
 body.cart-empty .checkout-wrap { display: none; }
 body.cart-empty .empty-checkout { display: block; }
 .form-section.needs-attention { outline: 1px solid #e57373; outline-offset: 6px; }
+.expedition-card.is-disabled { opacity: 0.4; cursor: not-allowed; }
+.expedition-card.is-disabled .expedition-est { color: #e57373; }
+.buy-now-banner { display: none; margin: 0; padding: 14px 36px; background: var(--orange-dim); border-bottom: 1px solid rgba(216, 85, 24, 0.25);
+  font-size: 13px; line-height: 1.7; color: var(--cream); }
+.buy-now-banner strong { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.18em; color: var(--orange); }
+.buy-now-banner a { color: var(--gold); }
 /* Responsif (mockup lama hanya desktop) */
 @media (max-width: 960px) {
   html, body { min-width: 0 !important; overflow-x: hidden; }
   .checkout-wrap { grid-template-columns: minmax(0, 1fr) !important; gap: 0 !important; min-height: 0 !important; }
   .form-column { padding: 28px 20px 60px !important; border-right: none !important; min-width: 0; }
   .summary-column { position: static !important; order: -1; max-height: none !important; overflow: visible !important; border-left: none !important; min-width: 0; }
-  .summary-header, .summary-items, .summary-breakdown, .summary-total, .summary-trust { padding-left: 20px !important; padding-right: 20px !important; }
+  .summary-header, .summary-items, .summary-breakdown, .summary-total, .summary-trust, .buy-now-banner { padding-left: 20px !important; padding-right: 20px !important; }
   .summary-trust { display: none; }
   .progress-bar { padding: 0 16px !important; }
   .step { padding-right: 8px !important; gap: 8px !important; }
@@ -750,6 +756,7 @@ body.cart-empty .empty-checkout { display: block; }
   .form-row.col-2, .form-row.col-3 { grid-template-columns: 1fr !important; }
   nav { padding-left: 20px !important; padding-right: 20px !important; }
   .nav-secure { display: none !important; }
+  .nav-faq { display: none !important; }
   .progress-steps { gap: 6px !important; }
   .payment-tabs { flex-wrap: wrap; }
   .payment-tab { flex: 1 1 45%; }
@@ -760,12 +767,20 @@ body.cart-empty .empty-checkout { display: block; }
 <style>
 /* Keterbacaan (sama dengan halaman lain): teks sekunder 92% */
 :root { --muted: rgba(240, 232, 216, 0.92); --muted-lo: rgba(240, 232, 216, 0.72); }
+/* Link bantuan kontekstual (FAQ, Shipping & Returns, Track Order) */
+.nav-faq { margin-left: auto; margin-right: 28px; }
+.ship-policy-link { margin-top: 16px; font-size: 13px; color: var(--muted); }
+.ship-policy-link a, .ref-track { color: var(--gold); }
+.ref-track { display: inline-block; margin-top: 8px; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.16em; text-decoration: none; }
+.ref-track:hover, .ship-policy-link a:hover { color: var(--orange); }
+@media (max-width: 767px) { .nav-faq-link { display: none !important; } }
 </style>
 </head>
 <body>
 <nav>
   <a href="home.html" class="nav-logo-wrap"><img src="https://ronaldcigar.com/wp-content/uploads/2026/04/cropped-Logo_Ronald_Square-removebg-preview.png" alt="Ronald Cigar" style="height:48px;width:auto;object-fit:contain;"></a>
   <div class="nav-secure"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> SECURE CHECKOUT</div>
+  <a href="faq.html" class="nav-back nav-faq" target="_blank">HELP &amp; FAQ</a>
   <a href="products.html" class="nav-back" onclick="if(document.referrer&&history.length>1){history.back();return false;}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="15 18 9 12 15 6"/></svg> CONTINUE SHOPPING</a>
 </nav>
 <div class="progress-bar"><div class="progress-steps"><div class="step done"><div class="step-num"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="step-label">CART</div></div></div><div class="step-connector"></div><div class="step active"><div class="step-num">2</div><div><div class="step-label">DETAILS</div></div></div><div class="step-connector"></div><div class="step pending"><div class="step-num">3</div><div><div class="step-label">PAYMENT</div></div></div><div class="step-connector"></div><div class="step pending"><div class="step-num">4</div><div><div class="step-label">CONFIRMATION</div></div></div></div></div>
@@ -894,6 +909,7 @@ body.cart-empty .empty-checkout { display: block; }
           </div>
         </div>
       </div>
+      <p class="ship-policy-link">Delivery times, the 21+ check on delivery, and returns: <a href="shipping-returns.html" target="_blank">Shipping &amp; Returns</a></p>
     </div>
     
     <div class="form-section fadein fadein-d4">
@@ -1030,6 +1046,7 @@ body.cart-empty .empty-checkout { display: block; }
       <div class="summary-title">ORDER SUMMARY</div>
       <div class="summary-subtitle" id="sumCount">Your order</div>
     </div>
+    <div class="buy-now-banner" id="buyNowBanner"></div>
     <div class="summary-items" id="summaryItems"></div>
     <div class="summary-breakdown">
       <div class="breakdown-row"><span class="breakdown-label" id="subLabel">SUBTOTAL</span><span class="breakdown-value" id="subtotalDisplay">Rp 0</span></div>
@@ -1097,13 +1114,15 @@ body.cart-empty .empty-checkout { display: block; }
       variants: {
         gold:   { label: 'Gold',   img: IMG + 'Cigar-Cutter-Gold.png' },
         black:  { label: 'Black',  img: IMG + 'Cigar-Cutter-Black.png' },
-        yellow: { label: 'Yellow', img: IMG + 'Cigar-Cutter-Yellow.png' },
+        // DUMMY stok kosong untuk mockup. Production: stok per varian dari WooCommerce.
+        yellow: { label: 'Yellow', img: IMG + 'Cigar-Cutter-Yellow.png', soldOut: true },
         silver: { label: 'Silver', img: IMG + 'Cigar-Cutter-Silver.png' }
       }
     }
   };
 
   var STORE_KEY = 'rc_cart';
+  var WA_NOTIFY = 'https://wa.me/6281130888810?text=';
   var cart = load();
   var cartOpen = false;
   var selected = {}; // pilihan varian di kartu produk, per productId
@@ -1131,6 +1150,47 @@ body.cart-empty .empty-checkout { display: block; }
     cart = out;
   }
 
+  function isSoldOut(pid, v) {
+    var p = PRODUCTS[pid];
+    return !!(p && v && p.variants && p.variants[v] && p.variants[v].soldOut);
+  }
+  function soldOutLabel(pid, v) { return PRODUCTS[pid].variants[v].label + ' · Sold out'; }
+  function cardScope(el) { return el && el.closest ? el.closest('.product-card, .product-card-body, .product-overlay') : null; }
+
+  // Tombol Add to Cart di kartu: berubah jadi NOTIFY ME saat varian stok kosong dipilih
+  function syncCardButton(pid, el) {
+    var scope = cardScope(el);
+    var btn = scope && scope.querySelector('.btn-cart, .btn-add-cart');
+    if (!btn) return;
+    var out = isSoldOut(pid, selected[pid]);
+    if (!btn.getAttribute('data-label')) btn.setAttribute('data-label', btn.textContent);
+    btn.classList.toggle('is-notify', out);
+    btn.textContent = out ? 'NOTIFY ME' : btn.getAttribute('data-label');
+  }
+
+  // Tandai semua swatch / chip varian yang stoknya kosong
+  function decorate() {
+    Object.keys(PRODUCTS).forEach(function (pid) {
+      var p = PRODUCTS[pid];
+      if (!p.variants) return;
+      Object.keys(p.variants).forEach(function (k) {
+        if (!p.variants[k].soldOut) return;
+        document.querySelectorAll('[data-variant-group="' + pid + '"] [data-variant="' + k + '"]').forEach(function (b) {
+          b.classList.add('is-soldout');
+          b.setAttribute('title', soldOutLabel(pid, k));
+          b.setAttribute('aria-label', soldOutLabel(pid, k));
+        });
+      });
+    });
+  }
+
+  window.rcIsSoldOut = isSoldOut;
+  window.notifyMe = function (pid, v) {
+    var p = PRODUCTS[pid];
+    var name = p.name + (v && p.variants && p.variants[v] ? ' ' + p.variants[v].label : '');
+    window.open(WA_NOTIFY + encodeURIComponent('Halo Ronald Cigar, tolong kabari saya saat ' + name + ' tersedia lagi.'), '_blank');
+  };
+
   /* ── PUBLIC ── */
   window.toggleCart = function (force) {
     cartOpen = typeof force === 'boolean' ? force : !cartOpen;
@@ -1142,13 +1202,17 @@ body.cart-empty .empty-checkout { display: block; }
     selected[productId] = variantKey;
     var group = el.closest('[data-variant-group]');
     if (group) {
+      group.classList.remove('needs-choice');
       group.querySelectorAll('[data-variant]').forEach(function (b) {
         b.classList.toggle('active', b.getAttribute('data-variant') === variantKey);
       });
       var lbl = group.querySelector('.variant-current');
       var p = PRODUCTS[productId];
-      if (lbl && p.variants[variantKey]) lbl.textContent = p.variants[variantKey].label;
+      var out = isSoldOut(productId, variantKey);
+      if (lbl && p.variants[variantKey]) lbl.textContent = out ? soldOutLabel(productId, variantKey) : p.variants[variantKey].label;
+      if (lbl) lbl.classList.toggle('is-soldout', out);
     }
+    syncCardButton(productId, el);
   };
 
   // Kembali ke tampilan semua varian (foto preview awal), pilihan varian dikosongkan
@@ -1160,8 +1224,9 @@ body.cart-empty .empty-checkout { display: block; }
         b.classList.toggle('active', b.getAttribute('data-variant') === '');
       });
       var lbl = group.querySelector('.variant-current');
-      if (lbl) lbl.textContent = 'Select finish';
+      if (lbl) { lbl.textContent = 'Select finish'; lbl.classList.remove('is-soldout'); }
     }
+    syncCardButton(productId, el);
     if (productId === 'luxury-cigar-cutter' && typeof swapCutterImg === 'function') {
       swapCutterImg(PRODUCTS[productId].img);
     }
@@ -1178,6 +1243,18 @@ body.cart-empty .empty-checkout { display: block; }
       variant = opts.variant !== undefined ? opts.variant : (selected[productId] || null);
       if (variant && !p.variants[variant]) variant = null;
     }
+    if (isSoldOut(productId, variant)) {
+      if (opts.from && opts.from.classList && opts.from.classList.contains('is-notify')) { notifyMe(productId, variant); return false; }
+      showToast(p.variants[variant].label + ' is sold out. Please choose another ' + (p.variantType || 'option') + '.');
+      return false;
+    }
+    if (opts.requireVariant && p.variants && !variant) {
+      showToast(p.variantType === 'size' ? 'Please select a size first' : 'Please select a finish first');
+      var scope = opts.from && opts.from.closest ? (opts.from.closest('.product-card, .product-card-body, .product-overlay') || document) : document;
+      var row = scope.querySelector('[data-variant-group="' + productId + '"]');
+      if (row) { row.classList.remove('needs-choice'); void row.offsetWidth; row.classList.add('needs-choice'); }
+      return false;
+    }
     var ex = cart.find(function (i) { return i.id === productId && i.variant === variant; });
     if (ex) ex.qty = Math.min(99, ex.qty + qty);
     else cart.push({ id: productId, variant: variant, qty: qty });
@@ -1191,21 +1268,20 @@ body.cart-empty .empty-checkout { display: block; }
   };
 
   // Beli langsung: masukkan ke cart lalu langsung ke halaman checkout
+  // Beli langsung: HANYA produk ini yang dibawa ke checkout. Isi cart tetap tersimpan untuk nanti.
   window.buyNow = function (productId, opts) {
     opts = opts || {};
     var p = PRODUCTS[productId];
     if (!p) return;
-    if (p.variants && !(opts.variant || selected[productId])) {
+    var variant = p.variants ? (opts.variant || selected[productId] || null) : null;
+    if (p.variants && !variant) {
       showToast(p.variantType === 'size' ? 'Please select a size first' : 'Please select a finish first');
       return;
     }
-    addToCart(productId, { qty: opts.qty, variant: opts.variant, silent: true });
-    if (cart.some(needsVariant)) {   // item lain di cart belum lengkap -> selesaikan di drawer dulu
-      toggleCart(true);
-      showToast('Please select a size / finish for every item');
-      return;
-    }
-    window.location.href = 'checkout.html';
+    if (isSoldOut(productId, variant)) { showToast(p.variants[variant].label + ' is sold out. Please choose another ' + p.variantType + '.'); return; }
+    var qty = Math.max(1, Math.min(99, parseInt(opts.qty, 10) || 1));
+    try { sessionStorage.setItem('rc_buynow', JSON.stringify({ id: productId, variant: variant, qty: qty })); } catch (e) {}
+    window.location.href = 'checkout.html?buynow=1';
   };
 
   // Dipakai PDP: set varian terpilih tanpa elemen tombol
@@ -1224,7 +1300,7 @@ body.cart-empty .empty-checkout { display: block; }
     var p = PRODUCTS[item.id], v = item.variant && p.variants ? p.variants[item.variant] : null;
     return { id: item.id, variant: item.variant, qty: item.qty, name: p.name, unit: p.unit, price: p.price,
              label: v ? v.label : (p.variants ? '' : p.spec), img: (v && v.img) || p.img,
-             needsVariant: !!p.variants && !item.variant, variantType: p.variantType, lineTotal: p.price * item.qty };
+             needsVariant: !!p.variants && !item.variant, soldOut: isSoldOut(item.id, item.variant), variantType: p.variantType, lineTotal: p.price * item.qty };
   };
 
   window.rcCartCount = function () { return cart.reduce(function (s, i) { return s + i.qty; }, 0); };
@@ -1253,12 +1329,18 @@ body.cart-empty .empty-checkout { display: block; }
       showToast('Please select a size / finish for every item');
       return;
     }
+    if (cart.some(soldOutItem)) {
+      showToast('An item in your cart is sold out. Please choose another option or remove it.');
+      return;
+    }
+    try { sessionStorage.removeItem('rc_buynow'); } catch (e) {}
     window.location.href = 'checkout.html';
   };
 
   function needsVariant(item) {
     return !!PRODUCTS[item.id].variants && !item.variant;
   }
+  function soldOutItem(item) { return isSoldOut(item.id, item.variant); }
 
   function render() {
     var count = cart.reduce(function (s, i) { return s + i.qty; }, 0);
@@ -1269,11 +1351,14 @@ body.cart-empty .empty-checkout { display: block; }
     if (!document.getElementById('cartBody')) return;   // halaman checkout: tanpa drawer
     document.getElementById('cartTotal').textContent = rp(total);
 
-    var missing = cart.some(needsVariant);
+    var missing = cart.some(needsVariant), soldOut = cart.some(soldOutItem);
     var btn = document.getElementById('btnCheckout');
     var warn = document.getElementById('cartWarn');
-    if (btn) btn.disabled = !cart.length || missing;
-    if (warn) warn.style.display = missing ? 'block' : 'none';
+    if (btn) btn.disabled = !cart.length || missing || soldOut;
+    if (warn) {
+      warn.style.display = missing || soldOut ? 'block' : 'none';
+      warn.textContent = soldOut && !missing ? '♦ Remove sold-out items or choose another option' : '♦ Select a size / finish for every item';
+    }
 
     var body = document.getElementById('cartBody');
     if (!cart.length) {
@@ -1290,9 +1375,10 @@ body.cart-empty .empty-checkout { display: block; }
       if (p.variants) {
         var opts = '<option value="">' + (p.variantType === 'size' ? 'Select size…' : 'Select finish…') + '</option>' +
           Object.keys(p.variants).map(function (k) {
-            return '<option value="' + k + '"' + (k === item.variant ? ' selected' : '') + '>' + esc(p.variants[k].label) + '</option>';
+            var out = p.variants[k].soldOut;
+            return '<option value="' + k + '"' + (k === item.variant ? ' selected' : '') + (out ? ' disabled' : '') + '>' + esc(p.variants[k].label) + (out ? ' (sold out)' : '') + '</option>';
           }).join('');
-        variantField = '<select class="cart-variant' + (item.variant ? '' : ' is-missing') + '" onchange="setItemVariant(' + idx + ', this.value)" aria-label="' + p.variantType + '">' + opts + '</select>';
+        variantField = '<select class="cart-variant' + (item.variant && !soldOutItem(item) ? '' : ' is-missing') + '" onchange="setItemVariant(' + idx + ', this.value)" aria-label="' + p.variantType + '">' + opts + '</select>';
       }
       return '' +
         '<div class="cart-item">' +
@@ -1301,6 +1387,7 @@ body.cart-empty .empty-checkout { display: block; }
             '<div class="cart-item-name">' + esc(p.name) + '</div>' +
             variantField +
             (spec ? '<div class="cart-item-spec">' + esc(spec) + '</div>' : '') +
+            (soldOutItem(item) ? '<div class="cart-item-soldout">SOLD OUT · choose another ' + p.variantType + '</div>' : '') +
             '<div class="cart-item-price">' + rp(p.price) + ' <span class="cart-item-unit">/ ' + p.unit + '</span></div>' +
             '<div class="cart-item-qty">' +
               '<button class="qty-btn" onclick="changeQty(' + idx + ',-1)" aria-label="Decrease">−</button>' +
@@ -1318,8 +1405,9 @@ body.cart-empty .empty-checkout { display: block; }
     if (e.key === STORE_KEY) { cart = load(); render(); }
   });
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
-  else render();
+  function init() { decorate(); render(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>
 <script>
@@ -1342,7 +1430,17 @@ var RC_PAY = {
 };
 function rcRp(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
 function rcEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-function rcLoadOrder() { try { return JSON.parse(localStorage.getItem('rc_order') || 'null'); } catch (e) { return null; } }
+// Data pesanan hanya disimpan sementara di perangkat ini (perangkat bersama!):
+// dihapus 24 jam setelah selesai/batal/kedaluwarsa, atau 48 jam setelah dibuat.
+function rcClearOrder() { try { localStorage.removeItem('rc_order'); } catch (e) {} }
+function rcLoadOrder() {
+  var o; try { o = JSON.parse(localStorage.getItem('rc_order') || 'null'); } catch (e) { o = null; }
+  if (!o) return null;
+  var now = Date.now(), H = 3600 * 1000;
+  var endedAt = o.paidAt || o.cancelledAt || (o.status === 'expired' || now > new Date(o.expiresAt).getTime() ? o.expiresAt : null);
+  if ((endedAt && now - new Date(endedAt).getTime() > 24 * H) || now - new Date(o.createdAt).getTime() > 48 * H) { rcClearOrder(); return null; }
+  return o;
+}
 function rcSaveOrder(o) { try { localStorage.setItem('rc_order', JSON.stringify(o)); } catch (e) {} }
 function rcDate(d, withTime) {
   d = new Date(d);
@@ -1387,7 +1485,14 @@ document.querySelectorAll('img[data-logo]').forEach(function (i) { var s = RC_LO
     'ROYAL10':    { type: 'pct', value: 10, label: 'ROYAL10 · 10% off your products' },
     'FIRSTORDER': { type: 'fixed', value: 20000, label: 'FIRSTORDER · Rp 20.000 off' }
   };
-  function lines() { return rcGetCart().map(rcLine); }
+  // Mode Buy Now: hanya produk yang dibeli langsung; isi cart tidak disentuh
+  var BUY = null;
+  try { if (/[?&]buynow=1/.test(location.search)) BUY = JSON.parse(sessionStorage.getItem('rc_buynow') || 'null'); } catch (e) {}
+  if (BUY && !RC_PRODUCTS[BUY.id]) BUY = null;
+  function saveBuy() { try { if (BUY) sessionStorage.setItem('rc_buynow', JSON.stringify(BUY)); else sessionStorage.removeItem('rc_buynow'); } catch (e) {} }
+  function lines() { return BUY ? [rcLine(BUY)] : rcGetCart().map(rcLine); }
+  function buyQty(i, d) { BUY.qty = Math.max(1, Math.min(99, BUY.qty + d)); saveBuy(); renderSummary(); }
+  function buyRemove() { BUY = null; saveBuy(); history.replaceState(null, '', 'checkout.html'); renderSummary(); toast('Item removed. Showing your cart.'); }
   function subtotal() { return lines().reduce(function (s, l) { return s + l.lineTotal; }, 0); }
   function discount() {
     if (!state.promo) return 0;
@@ -1412,15 +1517,21 @@ document.querySelectorAll('img[data-logo]').forEach(function (i) { var s = RC_LO
       }
       return '<div class="summary-item"><img class="rc-item-img" src="' + l.img + '" alt="">' +
         '<div class="summary-item-info"><div class="summary-item-name">' + rcEsc(l.name.toUpperCase()) + '</div>' +
-        (l.needsVariant ? '' : '<div class="summary-item-variant">' + rcEsc(l.label) + '</div>') + (l.needsVariant ? variant : '') +
-        '<div class="summary-item-qty"><button type="button" class="sum-qty-btn" onclick="changeQty(' + i + ',-1)" aria-label="Decrease">−</button>' +
-        '<span>' + l.qty + '</span><button type="button" class="sum-qty-btn" onclick="changeQty(' + i + ',1)" aria-label="Increase">+</button>' +
-        '<button type="button" class="sum-remove" onclick="removeItem(' + i + ')">REMOVE</button></div></div>' +
+        (l.needsVariant ? '' : '<div class="summary-item-variant">' + rcEsc(l.label) + (l.soldOut ? ' · <span style="color:#E8875A;">SOLD OUT</span>' : '') + '</div>') + (l.needsVariant ? variant : '') +
+        '<div class="summary-item-qty"><button type="button" class="sum-qty-btn" onclick="' + (BUY ? 'rcBuyQty' : 'changeQty') + '(' + i + ',-1)" aria-label="Decrease">−</button>' +
+        '<span>' + l.qty + '</span><button type="button" class="sum-qty-btn" onclick="' + (BUY ? 'rcBuyQty' : 'changeQty') + '(' + i + ',1)" aria-label="Increase">+</button>' +
+        '<button type="button" class="sum-remove" onclick="' + (BUY ? 'rcBuyRemove()' : 'removeItem(' + i + ')') + '">REMOVE</button></div></div>' +
         '<div class="summary-item-price">' + rcRp(l.lineTotal) + '</div></div>';
     }).join('');
     if (state.promo && !discount()) state.promo = null;
+    var banner = document.getElementById('buyNowBanner'), inCart = rcGetCart().reduce(function (a, it) { return a + it.qty; }, 0);
+    banner.style.display = BUY ? 'block' : 'none';
+    if (BUY) banner.innerHTML = '<strong>BUY NOW</strong> · Only this item is being checked out.' +
+      (inCart ? ' Your cart (' + inCart + (inCart === 1 ? ' item' : ' items') + ') is saved for later. <a href="checkout.html" onclick="rcBuyCancel()">Check out my cart instead</a>' : '');
     recalc();
   }
+  window.rcBuyQty = buyQty; window.rcBuyRemove = buyRemove;
+  window.rcBuyCancel = function () { BUY = null; saveBuy(); };
   window.rcSetVariant = function (i, key) { setItemVariant(i, key); };
   window.rcOnCartChange = function () { if (document.getElementById('summaryItems')) renderSummary(); };
 
@@ -1438,7 +1549,17 @@ document.querySelectorAll('img[data-logo]').forEach(function (i) { var s = RC_LO
   }
 
   /* ── Pengiriman ── */
+  var GOSEND_OK = ['DKI Jakarta', 'Jawa Barat', 'Banten'];
+  function gosendAllowed() { var p = document.getElementById('province').value; return !p || GOSEND_OK.indexOf(p) >= 0; }
+  function updateGosend() {
+    var card = document.querySelector('.expedition-card[data-ship="gosend"]'), ok = gosendAllowed();
+    card.classList.toggle('is-disabled', !ok);
+    card.querySelector('.expedition-est').textContent = ok ? 'Same day, 3 to 5 hours. Jabodetabek only' : 'Not available for ' + document.getElementById('province').value + '. Jabodetabek only';
+    if (!ok && state.ship === 'gosend') { selectShipping('jne-yes'); toast('GoSend is only available in Jabodetabek. Switched to JNE YES.'); }
+  }
+  document.getElementById('province').addEventListener('change', updateGosend);
   window.selectShipping = function (key) {
+    if (key === 'gosend' && !gosendAllowed()) { toast('GoSend is only available in Jabodetabek'); return; }
     state.ship = key;
     document.querySelectorAll('.expedition-card').forEach(function (c) { c.classList.toggle('selected', c.getAttribute('data-ship') === key); });
     document.getElementById('pickupLocationsList').style.display = key === 'pickup' ? 'flex' : 'none';
@@ -1529,6 +1650,7 @@ document.querySelectorAll('img[data-logo]').forEach(function (i) { var s = RC_LO
     var ls = lines();
     if (!ls.length) { toast('Your cart is empty'); return; }
     if (ls.some(function (l) { return l.needsVariant; })) { toast('Please select a size / finish for every item'); return; }
+    if (ls.some(function (l) { return l.soldOut; })) { toast('An item is sold out. Please choose another option or remove it.'); return; }
     var errs = [];
     function need(id, ok, msg) { if (!ok) { setErr(id, msg); errs.push(id); } else setErr(id, ''); }
     need('fullname', v('fullname').length >= 3, 'Please enter your full name.');
@@ -1544,6 +1666,7 @@ document.querySelectorAll('img[data-logo]').forEach(function (i) { var s = RC_LO
       need('city', v('city').length >= 3, 'Please enter your city or regency.');
       need('province', !!v('province'), 'Please select a province.');
       need('postalcode', /^\d{5}$/.test(v('postalcode')), 'Postal code must be 5 digits.');
+      if (state.ship === 'gosend' && !gosendAllowed()) need('province', false, 'GoSend is only available in Jabodetabek. Please choose another courier.');
     }
     if (errs.length) {
       var first = document.getElementById(errs[0] === 'idFile' ? 'idUpload' : errs[0]);
@@ -1567,14 +1690,15 @@ document.querySelectorAll('img[data-logo]').forEach(function (i) { var s = RC_LO
       subtotal: subtotal(), shipping: Object.assign({ key: state.ship }, RC_SHIPPING[state.ship]),
       discount: discount() ? { code: state.promo, amount: discount() } : null,
       total: total(), uniqueCode: Math.floor(100 + Math.random() * 900),
-      customer: { name: v('fullname'), phone: v('phone'), email: v('email'), dob: v('dob'), idFile: idf.files[0].name },
+      customer: { name: v('fullname'), phone: v('phone'), email: v('email') },
+      ageVerification: 'pending',   // tanggal lahir & dokumen ID TIDAK disimpan di browser
       address: state.ship === 'pickup' ? null : { recipient: v('recipient') || v('fullname'), street: v('address'), district: v('district'), city: v('city'), province: v('province'), postal: v('postalcode') },
       pickup: state.ship === 'pickup' ? RC_PICKUP : null,
       payment: { method: state.pay.method, channel: state.pay.channel },
       note: v('orderNote')
     };
     rcSaveOrder(order);
-    rcClearCart();
+    if (BUY) { BUY = null; saveBuy(); } else rcClearCart();   // Buy Now: isi cart tetap ada
     var btn = document.getElementById('placeOrderBtn');
     btn.disabled = true; btn.querySelector('span').textContent = 'PLACING ORDER…';
     setTimeout(function () { window.location.href = 'payment.html'; }, 600);
