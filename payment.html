@@ -335,6 +335,13 @@ body.order-ended .sticky-cta { display: none !important; }
 <style>
 /* Keterbacaan (sama dengan halaman lain): teks sekunder 92% */
 :root { --muted: rgba(240, 232, 216, 0.92); --muted-lo: rgba(240, 232, 216, 0.72); }
+/* Link bantuan kontekstual (FAQ, Shipping & Returns, Track Order) */
+.nav-faq { margin-left: auto; margin-right: 28px; }
+.ship-policy-link { margin-top: 16px; font-size: 13px; color: var(--muted); }
+.ship-policy-link a, .ref-track { color: var(--gold); }
+.ref-track { display: inline-block; margin-top: 8px; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.16em; text-decoration: none; }
+.ref-track:hover, .ship-policy-link a:hover { color: var(--orange); }
+@media (max-width: 767px) { .nav-faq-link { display: none !important; } }
 </style>
 </head>
 <body>
@@ -342,6 +349,7 @@ body.order-ended .sticky-cta { display: none !important; }
   <a href="home.html" class="nav-logo-wrap"><img src="https://ronaldcigar.com/wp-content/uploads/2026/04/cropped-Logo_Ronald_Square-removebg-preview.png" alt="Ronald Cigar" style="height:48px;width:auto;object-fit:contain;"></a>
   <div class="nav-right">
     <div class="nav-ref">Order Ref: <strong class="js-oid">#RC</strong></div>
+    <a class="nav-help nav-faq-link" href="faq.html" target="_blank">FAQ</a>
     <a class="nav-help js-help" href="https://wa.me/6281130888810" target="_blank"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4C2.7 15.6 2.2 13.8 2.2 12 2.2 6.6 6.6 2.2 12 2.2S21.8 6.6 21.8 12 17.4 21.8 12 21.8zM12 0C5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.8 1 3.8 1.5 5.8 1.5 6.6 0 12-5.4 12-12S18.6 0 12 0z"/></svg> NEED HELP?</a>
   </div>
 </nav>
@@ -362,6 +370,7 @@ body.order-ended .sticky-cta { display: none !important; }
         <div class="status-right">
           <div class="ref-label">ORDER NUMBER</div>
           <div class="ref-num" onclick="cp(ORDER.id,'Order number copied')"><span class="js-oid">#RC</span></div>
+          <a class="ref-track js-track" href="order-status.html">TRACK THIS ORDER →</a>
         </div>
       </div>
     </div>
@@ -494,13 +503,15 @@ body.order-ended .sticky-cta { display: none !important; }
       variants: {
         gold:   { label: 'Gold',   img: IMG + 'Cigar-Cutter-Gold.png' },
         black:  { label: 'Black',  img: IMG + 'Cigar-Cutter-Black.png' },
-        yellow: { label: 'Yellow', img: IMG + 'Cigar-Cutter-Yellow.png' },
+        // DUMMY stok kosong untuk mockup. Production: stok per varian dari WooCommerce.
+        yellow: { label: 'Yellow', img: IMG + 'Cigar-Cutter-Yellow.png', soldOut: true },
         silver: { label: 'Silver', img: IMG + 'Cigar-Cutter-Silver.png' }
       }
     }
   };
 
   var STORE_KEY = 'rc_cart';
+  var WA_NOTIFY = 'https://wa.me/6281130888810?text=';
   var cart = load();
   var cartOpen = false;
   var selected = {}; // pilihan varian di kartu produk, per productId
@@ -528,6 +539,47 @@ body.order-ended .sticky-cta { display: none !important; }
     cart = out;
   }
 
+  function isSoldOut(pid, v) {
+    var p = PRODUCTS[pid];
+    return !!(p && v && p.variants && p.variants[v] && p.variants[v].soldOut);
+  }
+  function soldOutLabel(pid, v) { return PRODUCTS[pid].variants[v].label + ' · Sold out'; }
+  function cardScope(el) { return el && el.closest ? el.closest('.product-card, .product-card-body, .product-overlay') : null; }
+
+  // Tombol Add to Cart di kartu: berubah jadi NOTIFY ME saat varian stok kosong dipilih
+  function syncCardButton(pid, el) {
+    var scope = cardScope(el);
+    var btn = scope && scope.querySelector('.btn-cart, .btn-add-cart');
+    if (!btn) return;
+    var out = isSoldOut(pid, selected[pid]);
+    if (!btn.getAttribute('data-label')) btn.setAttribute('data-label', btn.textContent);
+    btn.classList.toggle('is-notify', out);
+    btn.textContent = out ? 'NOTIFY ME' : btn.getAttribute('data-label');
+  }
+
+  // Tandai semua swatch / chip varian yang stoknya kosong
+  function decorate() {
+    Object.keys(PRODUCTS).forEach(function (pid) {
+      var p = PRODUCTS[pid];
+      if (!p.variants) return;
+      Object.keys(p.variants).forEach(function (k) {
+        if (!p.variants[k].soldOut) return;
+        document.querySelectorAll('[data-variant-group="' + pid + '"] [data-variant="' + k + '"]').forEach(function (b) {
+          b.classList.add('is-soldout');
+          b.setAttribute('title', soldOutLabel(pid, k));
+          b.setAttribute('aria-label', soldOutLabel(pid, k));
+        });
+      });
+    });
+  }
+
+  window.rcIsSoldOut = isSoldOut;
+  window.notifyMe = function (pid, v) {
+    var p = PRODUCTS[pid];
+    var name = p.name + (v && p.variants && p.variants[v] ? ' ' + p.variants[v].label : '');
+    window.open(WA_NOTIFY + encodeURIComponent('Halo Ronald Cigar, tolong kabari saya saat ' + name + ' tersedia lagi.'), '_blank');
+  };
+
   /* ── PUBLIC ── */
   window.toggleCart = function (force) {
     cartOpen = typeof force === 'boolean' ? force : !cartOpen;
@@ -539,13 +591,17 @@ body.order-ended .sticky-cta { display: none !important; }
     selected[productId] = variantKey;
     var group = el.closest('[data-variant-group]');
     if (group) {
+      group.classList.remove('needs-choice');
       group.querySelectorAll('[data-variant]').forEach(function (b) {
         b.classList.toggle('active', b.getAttribute('data-variant') === variantKey);
       });
       var lbl = group.querySelector('.variant-current');
       var p = PRODUCTS[productId];
-      if (lbl && p.variants[variantKey]) lbl.textContent = p.variants[variantKey].label;
+      var out = isSoldOut(productId, variantKey);
+      if (lbl && p.variants[variantKey]) lbl.textContent = out ? soldOutLabel(productId, variantKey) : p.variants[variantKey].label;
+      if (lbl) lbl.classList.toggle('is-soldout', out);
     }
+    syncCardButton(productId, el);
   };
 
   // Kembali ke tampilan semua varian (foto preview awal), pilihan varian dikosongkan
@@ -557,8 +613,9 @@ body.order-ended .sticky-cta { display: none !important; }
         b.classList.toggle('active', b.getAttribute('data-variant') === '');
       });
       var lbl = group.querySelector('.variant-current');
-      if (lbl) lbl.textContent = 'Select finish';
+      if (lbl) { lbl.textContent = 'Select finish'; lbl.classList.remove('is-soldout'); }
     }
+    syncCardButton(productId, el);
     if (productId === 'luxury-cigar-cutter' && typeof swapCutterImg === 'function') {
       swapCutterImg(PRODUCTS[productId].img);
     }
@@ -575,6 +632,18 @@ body.order-ended .sticky-cta { display: none !important; }
       variant = opts.variant !== undefined ? opts.variant : (selected[productId] || null);
       if (variant && !p.variants[variant]) variant = null;
     }
+    if (isSoldOut(productId, variant)) {
+      if (opts.from && opts.from.classList && opts.from.classList.contains('is-notify')) { notifyMe(productId, variant); return false; }
+      showToast(p.variants[variant].label + ' is sold out. Please choose another ' + (p.variantType || 'option') + '.');
+      return false;
+    }
+    if (opts.requireVariant && p.variants && !variant) {
+      showToast(p.variantType === 'size' ? 'Please select a size first' : 'Please select a finish first');
+      var scope = opts.from && opts.from.closest ? (opts.from.closest('.product-card, .product-card-body, .product-overlay') || document) : document;
+      var row = scope.querySelector('[data-variant-group="' + productId + '"]');
+      if (row) { row.classList.remove('needs-choice'); void row.offsetWidth; row.classList.add('needs-choice'); }
+      return false;
+    }
     var ex = cart.find(function (i) { return i.id === productId && i.variant === variant; });
     if (ex) ex.qty = Math.min(99, ex.qty + qty);
     else cart.push({ id: productId, variant: variant, qty: qty });
@@ -588,21 +657,20 @@ body.order-ended .sticky-cta { display: none !important; }
   };
 
   // Beli langsung: masukkan ke cart lalu langsung ke halaman checkout
+  // Beli langsung: HANYA produk ini yang dibawa ke checkout. Isi cart tetap tersimpan untuk nanti.
   window.buyNow = function (productId, opts) {
     opts = opts || {};
     var p = PRODUCTS[productId];
     if (!p) return;
-    if (p.variants && !(opts.variant || selected[productId])) {
+    var variant = p.variants ? (opts.variant || selected[productId] || null) : null;
+    if (p.variants && !variant) {
       showToast(p.variantType === 'size' ? 'Please select a size first' : 'Please select a finish first');
       return;
     }
-    addToCart(productId, { qty: opts.qty, variant: opts.variant, silent: true });
-    if (cart.some(needsVariant)) {   // item lain di cart belum lengkap -> selesaikan di drawer dulu
-      toggleCart(true);
-      showToast('Please select a size / finish for every item');
-      return;
-    }
-    window.location.href = 'checkout.html';
+    if (isSoldOut(productId, variant)) { showToast(p.variants[variant].label + ' is sold out. Please choose another ' + p.variantType + '.'); return; }
+    var qty = Math.max(1, Math.min(99, parseInt(opts.qty, 10) || 1));
+    try { sessionStorage.setItem('rc_buynow', JSON.stringify({ id: productId, variant: variant, qty: qty })); } catch (e) {}
+    window.location.href = 'checkout.html?buynow=1';
   };
 
   // Dipakai PDP: set varian terpilih tanpa elemen tombol
@@ -621,7 +689,7 @@ body.order-ended .sticky-cta { display: none !important; }
     var p = PRODUCTS[item.id], v = item.variant && p.variants ? p.variants[item.variant] : null;
     return { id: item.id, variant: item.variant, qty: item.qty, name: p.name, unit: p.unit, price: p.price,
              label: v ? v.label : (p.variants ? '' : p.spec), img: (v && v.img) || p.img,
-             needsVariant: !!p.variants && !item.variant, variantType: p.variantType, lineTotal: p.price * item.qty };
+             needsVariant: !!p.variants && !item.variant, soldOut: isSoldOut(item.id, item.variant), variantType: p.variantType, lineTotal: p.price * item.qty };
   };
 
   window.rcCartCount = function () { return cart.reduce(function (s, i) { return s + i.qty; }, 0); };
@@ -650,12 +718,18 @@ body.order-ended .sticky-cta { display: none !important; }
       showToast('Please select a size / finish for every item');
       return;
     }
+    if (cart.some(soldOutItem)) {
+      showToast('An item in your cart is sold out. Please choose another option or remove it.');
+      return;
+    }
+    try { sessionStorage.removeItem('rc_buynow'); } catch (e) {}
     window.location.href = 'checkout.html';
   };
 
   function needsVariant(item) {
     return !!PRODUCTS[item.id].variants && !item.variant;
   }
+  function soldOutItem(item) { return isSoldOut(item.id, item.variant); }
 
   function render() {
     var count = cart.reduce(function (s, i) { return s + i.qty; }, 0);
@@ -666,11 +740,14 @@ body.order-ended .sticky-cta { display: none !important; }
     if (!document.getElementById('cartBody')) return;   // halaman checkout: tanpa drawer
     document.getElementById('cartTotal').textContent = rp(total);
 
-    var missing = cart.some(needsVariant);
+    var missing = cart.some(needsVariant), soldOut = cart.some(soldOutItem);
     var btn = document.getElementById('btnCheckout');
     var warn = document.getElementById('cartWarn');
-    if (btn) btn.disabled = !cart.length || missing;
-    if (warn) warn.style.display = missing ? 'block' : 'none';
+    if (btn) btn.disabled = !cart.length || missing || soldOut;
+    if (warn) {
+      warn.style.display = missing || soldOut ? 'block' : 'none';
+      warn.textContent = soldOut && !missing ? '♦ Remove sold-out items or choose another option' : '♦ Select a size / finish for every item';
+    }
 
     var body = document.getElementById('cartBody');
     if (!cart.length) {
@@ -687,9 +764,10 @@ body.order-ended .sticky-cta { display: none !important; }
       if (p.variants) {
         var opts = '<option value="">' + (p.variantType === 'size' ? 'Select size…' : 'Select finish…') + '</option>' +
           Object.keys(p.variants).map(function (k) {
-            return '<option value="' + k + '"' + (k === item.variant ? ' selected' : '') + '>' + esc(p.variants[k].label) + '</option>';
+            var out = p.variants[k].soldOut;
+            return '<option value="' + k + '"' + (k === item.variant ? ' selected' : '') + (out ? ' disabled' : '') + '>' + esc(p.variants[k].label) + (out ? ' (sold out)' : '') + '</option>';
           }).join('');
-        variantField = '<select class="cart-variant' + (item.variant ? '' : ' is-missing') + '" onchange="setItemVariant(' + idx + ', this.value)" aria-label="' + p.variantType + '">' + opts + '</select>';
+        variantField = '<select class="cart-variant' + (item.variant && !soldOutItem(item) ? '' : ' is-missing') + '" onchange="setItemVariant(' + idx + ', this.value)" aria-label="' + p.variantType + '">' + opts + '</select>';
       }
       return '' +
         '<div class="cart-item">' +
@@ -698,6 +776,7 @@ body.order-ended .sticky-cta { display: none !important; }
             '<div class="cart-item-name">' + esc(p.name) + '</div>' +
             variantField +
             (spec ? '<div class="cart-item-spec">' + esc(spec) + '</div>' : '') +
+            (soldOutItem(item) ? '<div class="cart-item-soldout">SOLD OUT · choose another ' + p.variantType + '</div>' : '') +
             '<div class="cart-item-price">' + rp(p.price) + ' <span class="cart-item-unit">/ ' + p.unit + '</span></div>' +
             '<div class="cart-item-qty">' +
               '<button class="qty-btn" onclick="changeQty(' + idx + ',-1)" aria-label="Decrease">−</button>' +
@@ -715,8 +794,9 @@ body.order-ended .sticky-cta { display: none !important; }
     if (e.key === STORE_KEY) { cart = load(); render(); }
   });
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
-  else render();
+  function init() { decorate(); render(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>
 <script>
@@ -739,7 +819,17 @@ var RC_PAY = {
 };
 function rcRp(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
 function rcEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-function rcLoadOrder() { try { return JSON.parse(localStorage.getItem('rc_order') || 'null'); } catch (e) { return null; } }
+// Data pesanan hanya disimpan sementara di perangkat ini (perangkat bersama!):
+// dihapus 24 jam setelah selesai/batal/kedaluwarsa, atau 48 jam setelah dibuat.
+function rcClearOrder() { try { localStorage.removeItem('rc_order'); } catch (e) {} }
+function rcLoadOrder() {
+  var o; try { o = JSON.parse(localStorage.getItem('rc_order') || 'null'); } catch (e) { o = null; }
+  if (!o) return null;
+  var now = Date.now(), H = 3600 * 1000;
+  var endedAt = o.paidAt || o.cancelledAt || (o.status === 'expired' || now > new Date(o.expiresAt).getTime() ? o.expiresAt : null);
+  if ((endedAt && now - new Date(endedAt).getTime() > 24 * H) || now - new Date(o.createdAt).getTime() > 48 * H) { rcClearOrder(); return null; }
+  return o;
+}
 function rcSaveOrder(o) { try { localStorage.setItem('rc_order', JSON.stringify(o)); } catch (e) {} }
 function rcDate(d, withTime) {
   d = new Date(d);
@@ -798,6 +888,7 @@ var ORDER = rcLoadOrder();
 
   document.querySelectorAll('.js-oid').forEach(function (e) { e.textContent = '#' + ORDER.id; });
   document.querySelectorAll('.js-help').forEach(function (a) { a.href = rcWaLink('Hello Ronald Cigar, I need help with order #' + ORDER.id + '.'); });
+  document.querySelectorAll('.js-track').forEach(function (a) { a.href = 'order-status.html?order=' + encodeURIComponent(ORDER.id); });
 
   /* Ringkasan */
   var count = ORDER.items.reduce(function (s, i) { return s + i.qty; }, 0);
@@ -959,7 +1050,7 @@ var ORDER = rcLoadOrder();
   };
   window.cancelOrder = function () {
     document.getElementById('cancelModal').classList.remove('show');
-    ORDER.status = 'cancelled'; rcSaveOrder(ORDER);
+    ORDER.status = 'cancelled'; ORDER.cancelledAt = new Date().toISOString(); rcSaveOrder(ORDER);
     ended('● ORDER CANCELLED', 'Your order has been cancelled', 'No payment was taken. The reserved stock has been released.');
     toast('Order #' + ORDER.id + ' cancelled');
   };
